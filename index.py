@@ -26,7 +26,7 @@ import textCussDetect as td
 
 gs.main()
 # stt 호출
-
+"""
 # 최초 1회 생성
 (
     X_train,
@@ -41,3 +41,4 @@ gs.main()
 # td.training() #필요시 실행
 td.sentiment_predict("와", tokenizer)
 td.sentiment_predict("와?", tokenizer)
+"""

@@ -30,7 +30,6 @@ import queue
 import re
 import sys
 import time
-import keyboard  # 추가
 
 from google.cloud import speech
 import pyaudio
@@ -290,6 +289,7 @@ def listen_print_loop(responses: object, stream: object) -> object:
             sys.stdout.write(RED)
             sys.stdout.write("\033[K")
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
+
             stream.last_transcript_was_final = False
 
         return transcript
@@ -332,9 +332,10 @@ def main() -> None:
             )
 
             responses = client.streaming_recognize(streaming_config, requests)
-            print(responses)
+            # print()
             # Now, put the transcription responses to use.
             listen_print_loop(responses, stream)
+
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
             stream.result_end_time = 0
@@ -346,11 +347,6 @@ def main() -> None:
             if not stream.last_transcript_was_final:
                 sys.stdout.write("\n")
             stream.new_stream = True
-
-            # 키보드 이벤트 감지하여 프로그램 종료 (esc 또는 q 키)
-            # if keyboard.is_pressed("esc") or keyboard.is_pressed("q"):
-            #     print("Exiting...")
-            #     break
 
 
 if __name__ == "__main__":
