@@ -291,12 +291,13 @@ def listen_print_loop(responses: object, stream: object) -> object:
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
 
             stream.last_transcript_was_final = False
-
+        # print(f"transcript: {transcript}")
         return transcript
 
 
+"""
 def main() -> None:
-    """start bidirectional streaming from microphone input to speech API"""
+    # start bidirectional streaming from microphone input to speech API
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -334,8 +335,10 @@ def main() -> None:
             responses = client.streaming_recognize(streaming_config, requests)
             # print()
             # Now, put the transcription responses to use.
-            listen_print_loop(responses, stream)
-
+            sttResult = listen_print_loop(responses, stream)
+            print(f"sttResult: {sttResult}")
+            # listen_print_loop 함수로 결과가 출력됨
+            # print(f"responses: {listen_print_loop(responses, stream)}")
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
             stream.result_end_time = 0
@@ -347,9 +350,10 @@ def main() -> None:
             if not stream.last_transcript_was_final:
                 sys.stdout.write("\n")
             stream.new_stream = True
+    # return sttResult
 
 
 if __name__ == "__main__":
     main()
-
+"""
 # [END speech_transcribe_infinite_streaming]
