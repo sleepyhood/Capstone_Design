@@ -9,6 +9,7 @@
 
 ### 패치 23/11/16
 <img width="294" alt="image" src="https://github.com/sleepyhood/Capstone_Design/assets/69490791/7c3a828d-85cd-4de4-8600-e91568c921e6">
+
 * 오디오 스트림이 동작하는 동안, 읽은 문장을 바탕으로 즉각으로 욕설여부 판별
 * (제작 필요) 비디오 인터페이스를 구축하여, 캠을 활성화 할 때 STT와 욕설 여부를 판별
 
