@@ -14,7 +14,8 @@ from sklearn.model_selection import train_test_split
 from konlpy.tag import Okt
 from konlpy.tag import Kkma
 from keras import layers, models, optimizers, losses, metrics
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# from tensorflow.keras.preprocessing.sequence import pad_sequences
 import textCussDetect as td
 
 
