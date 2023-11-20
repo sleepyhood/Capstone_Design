@@ -92,6 +92,7 @@ class ResumableMicrophoneStream:
             channels=self._num_channels,
             rate=self._rate,
             input=True,
+            output=True,  # 출력 추가
             frames_per_buffer=self.chunk_size,
             # Run the audio stream asynchronously to fill the buffer object.
             # This is necessary so that the input device's buffer doesn't
@@ -295,7 +296,6 @@ def listen_print_loop(responses: object, stream: object) -> object:
         return transcript
 
 
-"""
 def main() -> None:
     # start bidirectional streaming from microphone input to speech API
     client = speech.SpeechClient()
@@ -355,5 +355,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-"""
+
 # [END speech_transcribe_infinite_streaming]

@@ -21,6 +21,13 @@ import textCussDetect as td
 from google.cloud import speech
 import pyaudio
 import keyboard
+import cv2
+
+
+folder_path = "#trainer"
+cam = cv2.VideoCapture(0)
+cam.set(3, 640)  # set video width
+cam.set(4, 480)  # set video height
 
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
@@ -37,6 +44,37 @@ YELLOW = "\033[0;33m"
 
 
 # gs.main()
+p = pyaudio.PyAudio()
+
+CHUNK = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 44100
+
+
+# 입력 스트림 열기
+"""
+stream_in = p.open(
+    format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK
+)
+"""
+# 출력 스트림 열기
+stream_out = p.open(
+    format=FORMAT, channels=CHANNELS, rate=RATE, output=True, frames_per_buffer=CHUNK
+)
+
+
+# 조건을 만족할 때 삐- 소리 생성
+def beep():
+    frequency = 1000  # 소리의 높낮이
+    duration = 1  # 지속시간 (초)
+
+    t = np.arange(int(RATE * duration)) / RATE
+    wave = 0.5 * np.sin(2 * np.pi * frequency * t)
+
+    return wave.astype(np.int16).tobytes()
+
+
 """
 # 최초 1회 생성
 (
@@ -76,7 +114,25 @@ def googleSTT():
     sys.stdout.write("=====================================================\n")
 
     with mic_manager as stream:
-        while not stream.closed:
+        # while True:
+        while not stream.closed and cam.isOpened():
+            """
+            # 추가중
+            ret, img = cam.read()
+            # img = cv2.flip(img, -1) # flip video image vertically
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            # Save the captured image into the datasets folder
+            if ret:
+                cv2.imshow("image", img)
+            k = cv2.waitKey(100) & 0xFF  # Press 'ESC' for exiting video
+            if k == 27:
+                break
+            """
+            # input_data = stream_in.read(CHUNK)
+            # input_array = np.frombuffer(input_data, dtype=np.int16)
+
+            # output_data = input_array.tobytes()
             # if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
             #     print("프로그램을 종료합니다.")
             #     break
@@ -87,6 +143,9 @@ def googleSTT():
 
             stream.audio_input = []
             audio_generator = stream.generator()
+
+            # input_array = np.frombuffer(audio_generator, dtype=np.int16)  # 추가
+            # output_data = audio_generator.tobytes()  # 추가
 
             requests = (
                 speech.StreamingRecognizeRequest(audio_content=content)
@@ -100,8 +159,12 @@ def googleSTT():
             print(f"sttResult: {sttResult}")
 
             #
-            td.sentiment_predict(sttResult, tokenizer)
-            #
+            # boolResult = td.sentiment_predict(sttResult, tokenizer)
+            # if boolResult:
+            #     output_data += beep()
+
+            # 출력 스트림으로 데이터 전송
+            # stream_out.write(output_data)  # 추가
 
             # listen_print_loop 함수로 결과가 출력됨
             # print(f"responses: {listen_print_loop(responses, stream)}")
@@ -117,17 +180,52 @@ def googleSTT():
                 sys.stdout.write("\n")
             stream.new_stream = True
 
+            """
+                출력 부분 추가
+                수업시간에 추가한거라 출력됬는지 확인 필요
+            """
+            # 마이크에서 데이터 읽기
+            input_data = np.array(stream.audio_input)  # ?
+            input_array = np.frombuffer(input_data, dtype=np.int16)
 
+            # 여기에서 음성 처리 및 분석을 수행할 수 있습니다.
+            # 이 예제에서는 받은 데이터를 그대로 출력으로 전달합니다.
+            output_data = input_array.tobytes()
+            stream_out.write(output_data)
+
+
+"""
 def main():
-    while True:
-        # q 또는 esc 키를 누르면 반복문 종료
-        if keyboard.is_pressed("q") or keyboard.is_pressed("esc"):
-            print("프로그램을 종료합니다.")
-            break
-        # with mic_manager as stream:
+    try:
+        while True:
+            # 마이크에서 데이터 읽기
+            input_data = stream_in.read(CHUNK_SIZE)
+            input_array = np.frombuffer(input_data, dtype=np.int16)
 
-        # 여기에서 수행할 작업을 추가
+            # 여기에서 음성 처리 및 분석을 수행할 수 있습니다.
+            # 이 예제에서는 받은 데이터를 그대로 출력으로 전달합니다.
+            output_data = input_array.tobytes()
 
+            # googleSTT 함수 호출 시 입력 및 출력 스트림을 전달
+            googleSTT()
+
+            # 특정 조건을 만족하면 "삐-" 소리 추가
+            # if True:
+            #     output_data += beep()
+
+            # 출력 스트림으로 데이터 전송
+            stream_out.write(output_data)
+
+    except KeyboardInterrupt:
+        print("프로그램을 종료합니다.")
+    finally:
+        # 스트림 닫기
+        stream_in.stop_stream()
+        stream_in.close()
+        stream_out.stop_stream()
+        stream_out.close()
+        p.terminate()
+"""
 
 # if __name__ == "__main__":
 #     main()
@@ -135,3 +233,46 @@ def main():
 
 # stt 호출
 googleSTT()
+# cam.release()
+# cv2.destroyAllWindows()
+
+
+def list_files(folder_path):
+    print("Files in the folder:")
+    files = os.listdir(folder_path)
+    for file in files:
+        print(file)
+
+
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+        print(f"File {file_path} deleted successfully.")
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
+
+
+# 특정 폴더 경로 설정
+# folder_path = "/path/to/your/folder"
+"""
+while True:
+    print("\nOptions:")
+    print("1. Exit")
+    print("2. List files in the folder")
+    print("3. Delete a file")
+
+    choice = input("Enter your choice (1/2/3): ")
+
+    if choice == "1":
+        print("Exiting the program.")
+        break
+    elif choice == "2":
+        list_files(folder_path)
+    elif choice == "3":
+        file_to_delete = input("Enter the file name to delete: ")
+        file_path = os.path.join(folder_path, file_to_delete)
+        delete_file(file_path)
+    else:
+        print("Invalid choice. Exiting.")
+        break
+"""

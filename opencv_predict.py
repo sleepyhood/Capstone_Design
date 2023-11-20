@@ -28,6 +28,8 @@ face_dict = {
 face_dict[face_id] = face_name
 # Initialize individual sampling face count
 count = 0
+
+# ===============================데이터 수집
 while True:
     ret, img = cam.read()
     # img = cv2.flip(img, -1) # flip video image vertically
@@ -92,7 +94,7 @@ print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids)))
 # ===============================예측
 print(face_dict)
 
-recognizer = cv2.face.LBPHFaceRecognizer_create()
+# recognizer = cv2.face.LBPHFaceRecognizer_create()
 # before
 # recognizer.read("#trainer/trainer.yml")
 # 디렉토리 경로

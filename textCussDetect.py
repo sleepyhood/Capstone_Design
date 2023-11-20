@@ -231,8 +231,10 @@ def sentiment_predict(new_sentence, tok):
     # score = float(loaded_model.predict(pad_new))  # 예측
     if score > 0.5:
         print("{:.2f}% 확률로 비속어가 있습니다...\n".format(score * 100))
+        return True
     else:
         print("{:.2f}% 확률로 비속어가 없습니다.\n".format((1 - score) * 100))
+        return False
 
 
 def training():
