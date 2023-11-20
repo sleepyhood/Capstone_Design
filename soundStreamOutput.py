@@ -56,7 +56,7 @@ try:
         # 출력 스트림으로 데이터 전송
         stream_out.write(output_data)
         # print(type(output_data))#<class 'bytes'>
-        """
+
         ret, img = cam.read()
         # img = cv2.flip(img, -1) # flip video image vertically
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -67,7 +67,7 @@ try:
         k = cv2.waitKey(100) & 0xFF  # Press 'ESC' for exiting video
         if k == 27:
             break
-        """
+
 
 except KeyboardInterrupt:
     print("프로그램을 종료합니다.")

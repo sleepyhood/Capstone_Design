@@ -29,8 +29,8 @@ import temp
 # 특정 폴더 경로 설정
 
 # Path for face image database
-data_path = "[OpenCV]dataset"
-training_path = "[OpenCV]trainer"
+data_path = "OpenCV_dataset"
+training_path = "OpenCV_trainer"
 cam = cv2.VideoCapture(0)
 cam.set(3, 640)  # set video width
 cam.set(4, 480)  # set video height
@@ -91,7 +91,7 @@ def beep():
     tokenizer,
     train_data,
     test_data,
-    vocab_size
+    vocab_size,
 ) = td.load_and_preprocess_data()
 """
 
@@ -102,6 +102,17 @@ def beep():
 
 
 def googleSTT():
+    (
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        tokenizer,
+        train_data,
+        test_data,
+        vocab_size,
+    ) = td.load_and_preprocess_data()
+
     # start bidirectional streaming from microphone input to speech API
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
@@ -168,7 +179,7 @@ def googleSTT():
             print(f"sttResult: {sttResult}")
 
             #
-            # boolResult = td.sentiment_predict(sttResult, tokenizer)
+            boolResult = td.sentiment_predict(sttResult, tokenizer)
             # if boolResult:
             #     output_data += beep()
 
@@ -266,12 +277,14 @@ def delete_file(file_path):
 
 
 # Path for face image database
-data_path = "[OpenCV]dataset"
-training_path = "[OpenCV]trainer"
+data_path = "OpenCV_dataset"
+training_path = "OpenCV_trainer"
 
 face_dict = {
     -1: "None",
 }
+
+# googleSTT()
 
 list_files(training_path)
 while True:

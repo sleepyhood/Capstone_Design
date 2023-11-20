@@ -55,13 +55,26 @@ def training(data_path, training_path):
     face_detector = cv2.CascadeClassifier(
         cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
     )
+    print(f"current face_id: {face_id}")
 
     def getImagesAndLabels(path):
         imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+        # 현존하는 trainer 내부의 모든 파일을 불러오지 않도록 예외처리
+        print(f"imagePaths: {imagePaths}")
+
+        # l[0].split('.') == 1
+        filtered_imagePaths = []
+        for i in range(len(imagePaths)):
+            if str(imagePaths[i].split(".")[1]) == str(face_id):
+                filtered_imagePaths.append(imagePaths[i])
+                print(f"filtered_imagePaths: {filtered_imagePaths}")
+        # 위의 코드는 face_id가 일치하는것만 고른다.
+
         faceSamples = []
         ids = []
-        for imagePath in imagePaths:
+        for imagePath in filtered_imagePaths:
             PIL_img = Image.open(imagePath).convert("L")  # convert it to grayscale
+            print(f"PIL_img:{PIL_img}")
             img_numpy = np.array(PIL_img, "uint8")
             id = int(os.path.split(imagePath)[-1].split(".")[1])
             # print(id)
