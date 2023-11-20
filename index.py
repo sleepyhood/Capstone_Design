@@ -23,8 +23,14 @@ import pyaudio
 import keyboard
 import cv2
 
+# import opencv_predict as op
+import temp
 
-folder_path = "#trainer"
+# 특정 폴더 경로 설정
+
+# Path for face image database
+data_path = "[OpenCV]dataset"
+training_path = "[OpenCV]trainer"
 cam = cv2.VideoCapture(0)
 cam.set(3, 640)  # set video width
 cam.set(4, 480)  # set video height
@@ -85,11 +91,14 @@ def beep():
     tokenizer,
     train_data,
     test_data,
+    vocab_size
 ) = td.load_and_preprocess_data()
 """
 
 # td.training() #필요시 실행
 # td.sentiment_predict("안녕하세요", tokenizer)
+
+""""""
 
 
 def googleSTT():
@@ -182,16 +191,16 @@ def googleSTT():
 
             """
                 출력 부분 추가
-                수업시간에 추가한거라 출력됬는지 확인 필요
             """
             # 마이크에서 데이터 읽기
-            input_data = np.array(stream.audio_input)  # ?
-            input_array = np.frombuffer(input_data, dtype=np.int16)
+            print(f"stream.audio_input: {type(stream.audio_input)}")
+        #    input_data = np.array(stream.audio_input)  # ?
+    #     input_array = np.frombuffer(input_data, dtype=np.int16)
 
-            # 여기에서 음성 처리 및 분석을 수행할 수 있습니다.
-            # 이 예제에서는 받은 데이터를 그대로 출력으로 전달합니다.
-            output_data = input_array.tobytes()
-            stream_out.write(output_data)
+    # 여기에서 음성 처리 및 분석을 수행할 수 있습니다.
+    # 이 예제에서는 받은 데이터를 그대로 출력으로 전달합니다.
+    #      output_data = input_array.tobytes()
+    #       stream_out.write(output_data)
 
 
 """
@@ -232,16 +241,20 @@ def main():
 
 
 # stt 호출
-googleSTT()
+# googleSTT()
 # cam.release()
 # cv2.destroyAllWindows()
 
 
+# 폴더
 def list_files(folder_path):
-    print("Files in the folder:")
     files = os.listdir(folder_path)
+    print(f"\n{len(files)} Files in the folder:")
     for file in files:
         print(file)
+        key = int(file.split(".")[1])  # 파일명에서 키 추출
+        value = file.split(".")[2]  # 파일명에서 값 추출
+        face_dict[key] = value
 
 
 def delete_file(file_path):
@@ -252,27 +265,40 @@ def delete_file(file_path):
         print(f"Error: {e.filename} - {e.strerror}")
 
 
-# 특정 폴더 경로 설정
-# folder_path = "/path/to/your/folder"
-"""
+# Path for face image database
+data_path = "[OpenCV]dataset"
+training_path = "[OpenCV]trainer"
+
+face_dict = {
+    -1: "None",
+}
+
+list_files(training_path)
 while True:
     print("\nOptions:")
-    print("1. Exit")
-    print("2. List files in the folder")
-    print("3. Delete a file")
+    print("1. 이미지 촬영 및 학습")
+    print("2. 학습 데이터 확인")
+    print("3. 학습 데이터 제거")
+    print("4. 웹캠 실행(+오디오 검열)")
+    print("0. 종료")
 
-    choice = input("Enter your choice (1/2/3): ")
+    choice = input("Enter your choice (1/2/3/4): ")
 
-    if choice == "1":
+    if choice == "0":
         print("Exiting the program.")
         break
+    elif choice == "1":
+        face_id, face_name = temp.training(data_path, training_path)
+        face_dict[id] = face_name
     elif choice == "2":
-        list_files(folder_path)
+        list_files(training_path)
     elif choice == "3":
         file_to_delete = input("Enter the file name to delete: ")
-        file_path = os.path.join(folder_path, file_to_delete)
+        file_path = os.path.join(training_path, file_to_delete)
         delete_file(file_path)
+    elif choice == "4":
+        temp.predict(face_dict, training_path)
+    elif choice == "0":
+        print("Exiting.")
     else:
-        print("Invalid choice. Exiting.")
-        break
-"""
+        print("Invalid choice.")

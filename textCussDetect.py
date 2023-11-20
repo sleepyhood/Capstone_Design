@@ -57,12 +57,13 @@ stopwords = [
     "하다",
 ]
 
+file_path = "content/textDataset.txt"
+
 
 def load_and_preprocess_data():
     # 최대 길이 35라 가정시, dir 96%가 35이하의 길이를 가짐
     # 불용어(분석에 큰 의미를 가지지 않는 단어)를 지정해야 올바른 결과 출력
     #
-    file_path = "#content/textDataset.txt"
 
     x = []
     y = []
@@ -208,7 +209,16 @@ def load_and_preprocess_data():
     y_test = np.array(test_data["label"])
 
     # 다른 함수에서 사용할 수 있도록 반환
-    return X_train, y_train, X_test, y_test, tokenizer, train_data, test_data
+    return (
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        tokenizer,
+        train_data,
+        test_data,
+        vocab_size,
+    )
 
 
 # 모델 호출
@@ -248,6 +258,7 @@ def training():
         tokenizer,
         train_data,
         test_data,
+        vocab_size,
     ) = load_and_preprocess_data()
 
     # print(tokenizer.word_index)

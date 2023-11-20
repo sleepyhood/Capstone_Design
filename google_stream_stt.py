@@ -92,7 +92,7 @@ class ResumableMicrophoneStream:
             channels=self._num_channels,
             rate=self._rate,
             input=True,
-            output=True,  # 출력 추가
+            # output=True,  # 출력 추가
             frames_per_buffer=self.chunk_size,
             # Run the audio stream asynchronously to fill the buffer object.
             # This is necessary so that the input device's buffer doesn't

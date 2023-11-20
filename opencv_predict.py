@@ -7,6 +7,30 @@ cam = cv2.VideoCapture(0)
 cam.set(3, 640)  # set video width
 cam.set(4, 480)  # set video height
 
+# Path for face image database
+data_path = "[OpenCV]dataset"
+training_path = "[OpenCV]trainer"
+
+# 딕셔너리 선언
+face_dict = {
+    -1: "None",
+}
+
+
+# 현재 저장된 yml 파일 불러오기
+def list_files(folder_path):
+    files = os.listdir(folder_path)
+    print(f"\n{len(files)} Files in the folder:")
+    # print("Files in the folder:")
+    for file in files:
+        print(file)
+        key = int(file.split(".")[1])  # 파일명에서 키 추출
+        value = file.split(".")[2]  # 파일명에서 값 추출
+        face_dict[key] = value
+
+
+print(list_files(training_path))
+print(face_dict)
 # before
 # face_detector = cv2.CascadeClassifier(
 #     'haarcascades/haarcascade_frontalface_default.xml')
@@ -21,10 +45,7 @@ face_id = int(input("\n enter user id end press <return> ==>  "))
 face_name = input("\n enter user name end press <return> ==>  ")
 print("\n [INFO] Initializing face capture. Look the camera and wait ...")
 
-# 딕셔너리 선언
-face_dict = {
-    -1: "None",
-}
+
 face_dict[face_id] = face_name
 # Initialize individual sampling face count
 count = 0
@@ -39,7 +60,9 @@ while True:
         cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
         count += 1
         # Save the captured image into the datasets folder
-        cv2.imwrite("#dataset/User." + str(face_id) + "." + str(count) + ".jpg", img)
+        cv2.imwrite(
+            str(data_path) + "/User." + str(face_id) + "." + str(count) + ".jpg", img
+        )
         cv2.imshow("image", img)
     k = cv2.waitKey(100) & 0xFF  # Press 'ESC' for exiting video
     if k == 27:
@@ -56,8 +79,6 @@ cv2.destroyAllWindows()
 # ===============================학습
 
 
-# Path for face image database
-path = "#dataset"
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 face_detector = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
@@ -81,12 +102,14 @@ def getImagesAndLabels(path):
 
 
 print("\n [INFO] Training faces. It will take a few seconds. Wait ...")
-faces, ids = getImagesAndLabels(path)
+faces, ids = getImagesAndLabels(data_path)
 recognizer.train(faces, np.array(ids))
 
 # Save the model into trainer/trainer.yml
 # recognizer.save() worked on Mac, but not on Pi
-recognizer.write("#trainer/trainer." + str(face_id) + "." + str(face_name) + ".yml")
+recognizer.write(
+    str(training_path) + "/trainer." + str(face_id) + "." + str(face_name) + ".yml"
+)
 # Print the numer of faces trained and end program
 print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
 
@@ -98,12 +121,12 @@ print(face_dict)
 # before
 # recognizer.read("#trainer/trainer.yml")
 # 디렉토리 경로
-directory = "#trainer/"  # 실제 디렉토리 경로로 대체해야 합니다
+# directory = "#trainer/"  # 실제 디렉토리 경로로 대체해야 합니다
 
 # 모든 yml 파일 불러오기
-for filename in os.listdir(directory):
+for filename in os.listdir(training_path):
     if filename.endswith(".yml"):
-        file_path = os.path.join(directory, filename)
+        file_path = os.path.join(training_path, filename)
         recognizer.read(file_path)
 
 
