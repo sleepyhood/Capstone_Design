@@ -4,6 +4,9 @@ import os
 import threading
 import Varable as v
 
+if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    print("INIT")
+
 app = Flask(__name__)
 training_path = v.training_path  # Replace with the actual path
 
@@ -70,7 +73,7 @@ def generate_frames():
                 blurred_roi = cv2.GaussianBlur(roi, (75, 75), 0)
                 img[y : y + h, x : x + w] = blurred_roi
 
-            cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (0, 0, 0), 2)
+            cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
             cv2.putText(
                 img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1
             )
@@ -93,7 +96,8 @@ def stream():
 
 
 def run_app():
-    app.run(host=v.my_ip, port="9080", debug=True)
+    app.run(debug=True, threaded=True)
+    # app.run(host=v.my_ip, port="9080", debug=True)
 
 
 if __name__ == "__main__":

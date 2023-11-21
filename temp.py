@@ -4,8 +4,7 @@ import cv2
 import os
 
 
-# After
-def training(data_path, training_path):
+def dataCollect(data_path):
     cam = cv2.VideoCapture(0)
     cam.set(3, 640)  # set video width
     cam.set(4, 480)  # set video height
@@ -34,7 +33,14 @@ def training(data_path, training_path):
             count += 1
             # Save the captured image into the datasets folder
             cv2.imwrite(
-                str(data_path) + "/User." + str(face_id) + "." + str(count) + ".jpg",
+                str(data_path)
+                + "/"
+                + str(face_id)
+                + "."
+                + str(face_name)
+                + "."
+                + str(count)
+                + ".jpg",
                 img,
             )
             cv2.imshow("image", img)
@@ -48,14 +54,18 @@ def training(data_path, training_path):
     print("\n [INFO] Exiting Program and cleanup stuff")
     cam.release()
     cv2.destroyAllWindows()
+    return face_id, face_name
 
-    # ===============================학습
 
+# ===============================학습
+
+
+def training(data_path, training_path):
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     face_detector = cv2.CascadeClassifier(
         cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
     )
-    print(f"current face_id: {face_id}")
+    # print(f"current face_id: {face_id}")
 
     def getImagesAndLabels(path):
         imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
@@ -63,20 +73,20 @@ def training(data_path, training_path):
         # print(f"imagePaths: {imagePaths}")
 
         # l[0].split('.') == 1
-        filtered_imagePaths = []
-        for i in range(len(imagePaths)):
-            if str(imagePaths[i].split(".")[1]) == str(face_id):
-                filtered_imagePaths.append(imagePaths[i])
-                # print(f"filtered_imagePaths: {filtered_imagePaths}")
+        # filtered_imagePaths = []
+        # for i in range(len(imagePaths)):
+        # if str(imagePaths[i].split(".")[1]) == str(face_id):
+        # filtered_imagePaths.append(imagePaths[i])
+        # print(f"filtered_imagePaths: {filtered_imagePaths}")
         # 위의 코드는 face_id가 일치하는것만 고른다.
-
+        # 231121 수정: 모든 traing 된 결괴는 yml 하나에 모여야 한다.
         faceSamples = []
         ids = []
-        for imagePath in filtered_imagePaths:
+        for imagePath in imagePaths:
             PIL_img = Image.open(imagePath).convert("L")  # convert it to grayscale
-            print(f"PIL_img:{PIL_img}")
+            # print(f"PIL_img:{PIL_img}")
             img_numpy = np.array(PIL_img, "uint8")
-            id = int(os.path.split(imagePath)[-1].split(".")[1])
+            id = int(os.path.split(imagePath)[-1].split(".")[0])
             # print(id)
             faces = face_detector.detectMultiScale(img_numpy)
             for x, y, w, h in faces:
@@ -90,16 +100,9 @@ def training(data_path, training_path):
 
     # Save the model into trainer/trainer.yml
     # recognizer.save() worked on Mac, but not on Pi
-    recognizer.write(
-        str(training_path) + "/trainer." + str(face_id) + "." + str(face_name) + ".yml"
-    )
+    recognizer.write(str(training_path) + "/trainer" + ".yml")
     # Print the numer of faces trained and end program
     print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
-
-    cam.release()
-    cv2.destroyAllWindows()
-
-    return face_id, face_name
 
 
 # ===============================예측

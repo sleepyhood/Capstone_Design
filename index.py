@@ -267,8 +267,8 @@ def list_files(folder_path):
     local_face_dict = {}
     for file in files:
         print(file)
-        key = int(file.split(".")[1])  # 파일명에서 키 추출
-        value = file.split(".")[2]  # 파일명에서 값 추출
+        key = int(file.split(".")[0])  # 파일명에서 키 추출
+        value = file.split(".")[1]  # 파일명에서 값 추출
         local_face_dict[key] = value
     return local_face_dict
 
@@ -288,15 +288,15 @@ def delete_file(file_path):
 # }
 
 # googleSTT()
-# print(f"index_v.face_dict1: {v.face_dict}")
-v.face_dict = list_files(training_path)
-# print(f"index_v.face_dict2: {v.face_dict}")
+print(f"index_v.face_dict1: {v.face_dict}")
+v.face_dict = list_files(data_path)
+print(f"index_v.face_dict2: {v.face_dict}")
 
 while True:
     print("\nOptions:")
-    print("1. 이미지 촬영 및 학습")
-    print("2. 학습 데이터 확인")
-    print("3. 학습 데이터 제거")
+    print("1. 이미지 촬영")
+    print("2. 이미지 학습")
+    print("3. 학습 데이터 확인")
     print("4. 웹캠 실행(+오디오 검열)")
     print("0. 종료")
 
@@ -306,21 +306,29 @@ while True:
         print("Exiting the program.")
         break
     elif choice == "1":
-        face_id, face_name = temp.training(data_path, training_path)
-        v.face_dict[id] = face_name
+        face_id, face_name = temp.dataCollect(data_path)
+        v.face_dict[face_id] = face_name
     elif choice == "2":
-        list_files(training_path)
+        temp.training(data_path, training_path)
     elif choice == "3":
-        file_to_delete = input("Enter the file name to delete: ")
-        file_path = os.path.join(training_path, file_to_delete)
-        delete_file(file_path)
+        v.face_dict = list_files(data_path)
+        print(v.face_dict)
+        # list_files(training_path)
+    # elif choice == "4":
+    # pass
+    # file_to_delete = input("Enter the file name to delete: ")
+    # file_path = os.path.join(training_path, file_to_delete)
+    # delete_file(file_path)
     elif choice == "4":
         # temp.predict(face_dict, training_path)
         # 위는 로컬환경에서 predict
         # list_files(training_path)
         fp.run_app()
-        # http://172.16.20.122:9080/
     elif choice == "0":
         print("Exiting.")
     else:
         print("Invalid choice.")
+
+
+# 구글 참고
+# https://cslife.tistory.com/entry/%ED%8C%8C%EC%9D%B4%EC%8D%AC-Flask%EB%A1%9C-%EB%A7%88%EC%9D%B4%ED%81%AC%EC%97%90%EC%84%9C-%EC%9E%85%EB%A0%A5%EB%B0%9B%EC%9D%80-%EC%9D%8C%EC%84%B1%EC%9D%84-%ED%85%8D%EC%8A%A4%ED%8A%B8%EB%A1%9C-%EB%9D%84%EC%9A%B0%EB%8A%94-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80-%EB%A7%8C%EB%93%A4%EA%B8%B0
