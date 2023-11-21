@@ -162,4 +162,5 @@ cython_debug/
 
 # 데이터셋 파일(사진)은 깃헙에 안올림
 
-[OpenCV]dataset/*.jpg
+OpenCV_dataset/*.jpg
+OpenCV_dataset/
