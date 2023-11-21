@@ -25,12 +25,15 @@ import cv2
 
 # import opencv_predict as op
 import temp
+import Varable as v
+import flask_predict as fp
 
 # 특정 폴더 경로 설정
 
 # Path for face image database
-data_path = "OpenCV_dataset"
-training_path = "OpenCV_trainer"
+data_path = v.data_path
+training_path = v.training_path
+
 cam = cv2.VideoCapture(0)
 cam.set(3, 640)  # set video width
 cam.set(4, 480)  # set video height
@@ -261,11 +264,13 @@ def main():
 def list_files(folder_path):
     files = os.listdir(folder_path)
     print(f"\n{len(files)} Files in the folder:")
+    local_face_dict = {}
     for file in files:
         print(file)
         key = int(file.split(".")[1])  # 파일명에서 키 추출
         value = file.split(".")[2]  # 파일명에서 값 추출
-        face_dict[key] = value
+        local_face_dict[key] = value
+    return local_face_dict
 
 
 def delete_file(file_path):
@@ -277,16 +282,16 @@ def delete_file(file_path):
 
 
 # Path for face image database
-data_path = "OpenCV_dataset"
-training_path = "OpenCV_trainer"
 
-face_dict = {
-    -1: "None",
-}
+# face_dict = {
+#     -1: "None",
+# }
 
 # googleSTT()
+# print(f"index_v.face_dict1: {v.face_dict}")
+v.face_dict = list_files(training_path)
+# print(f"index_v.face_dict2: {v.face_dict}")
 
-list_files(training_path)
 while True:
     print("\nOptions:")
     print("1. 이미지 촬영 및 학습")
@@ -302,7 +307,7 @@ while True:
         break
     elif choice == "1":
         face_id, face_name = temp.training(data_path, training_path)
-        face_dict[id] = face_name
+        v.face_dict[id] = face_name
     elif choice == "2":
         list_files(training_path)
     elif choice == "3":
@@ -310,7 +315,11 @@ while True:
         file_path = os.path.join(training_path, file_to_delete)
         delete_file(file_path)
     elif choice == "4":
-        temp.predict(face_dict, training_path)
+        # temp.predict(face_dict, training_path)
+        # 위는 로컬환경에서 predict
+        # list_files(training_path)
+        fp.run_app()
+        # http://172.16.20.122:9080/
     elif choice == "0":
         print("Exiting.")
     else:

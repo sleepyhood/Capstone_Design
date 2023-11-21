@@ -60,14 +60,14 @@ def training(data_path, training_path):
     def getImagesAndLabels(path):
         imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
         # 현존하는 trainer 내부의 모든 파일을 불러오지 않도록 예외처리
-        print(f"imagePaths: {imagePaths}")
+        # print(f"imagePaths: {imagePaths}")
 
         # l[0].split('.') == 1
         filtered_imagePaths = []
         for i in range(len(imagePaths)):
             if str(imagePaths[i].split(".")[1]) == str(face_id):
                 filtered_imagePaths.append(imagePaths[i])
-                print(f"filtered_imagePaths: {filtered_imagePaths}")
+                # print(f"filtered_imagePaths: {filtered_imagePaths}")
         # 위의 코드는 face_id가 일치하는것만 고른다.
 
         faceSamples = []
