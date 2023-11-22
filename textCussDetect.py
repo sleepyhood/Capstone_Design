@@ -19,13 +19,15 @@ from keras import layers, models, optimizers, losses, metrics
 
 from sklearn.model_selection import train_test_split
 
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Embedding, Dense, LSTM
-from tensorflow.keras.models import Sequential
+# from tensorflow.keras.preprocessing.text import Tokenizer
+# from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.sequence import pad_sequences
+
+from keras.layers import Embedding, Dense, LSTM
+from keras.models import Sequential
 
 # from tensorflow.keras.models import load_model
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
 from konlpy.tag import Okt
@@ -61,10 +63,6 @@ file_path = "content/textDataset.txt"
 
 
 def load_and_preprocess_data():
-    # 최대 길이 35라 가정시, dir 96%가 35이하의 길이를 가짐
-    # 불용어(분석에 큰 의미를 가지지 않는 단어)를 지정해야 올바른 결과 출력
-    #
-
     x = []
     y = []
     with open(file_path, "r", encoding="UTF-8") as file:
@@ -86,17 +84,6 @@ def load_and_preprocess_data():
 
     # 0 또는 1이 아닌 행 제거
     df = df[(df["Y"] == "0") | (df["Y"] == "1")]
-
-    # Y를 범주형으로 변환
-    # df["Y"] = df["Y"].astype("category")
-
-    # 유일한 범주 확인
-    # categories = df["Y"].cat.categories
-    # num_categories = len(categories)
-
-    # 결과 출력
-    # print(f"유일한 범주: {', '.join(categories)}")
-    # print(f"범주의 수: {num_categories}")
 
     # 0은 욕설아님, 1은 욕설
     print(df.groupby(df["Y"]).size().reset_index(name="count"))
@@ -260,52 +247,6 @@ def training():
         test_data,
         vocab_size,
     ) = load_and_preprocess_data()
-
-    # print(tokenizer.word_index)
-    """
-    threshold = 3
-    total_cnt = len(tokenizer.word_index)  # 단어의 수
-    rare_cnt = 0  # 등장 빈도수가 threshold보다 작은 단어의 개수를 카운트
-    total_freq = 0  # 훈련 데이터의 전체 단어 빈도수 총 합
-    rare_freq = 0  # 등장 빈도수가 threshold보다 작은 단어의 등장 빈도수의 총 합
-
-    # 단어와 빈도수의 쌍(pair)을 key와 value로 받는다.
-    for key, value in tokenizer.word_counts.items():
-        total_freq = total_freq + value
-
-        # 단어의 등장 빈도수가 threshold보다 작으면
-        if value < threshold:
-            rare_cnt = rare_cnt + 1
-            rare_freq = rare_freq + value
-
-    print("단어 집합(vocabulary)의 크기 :", total_cnt)
-    print("등장 빈도가 %s번 이하인 희귀 단어의 수: %s" % (threshold - 1, rare_cnt))
-    print("단어 집합에서 희귀 단어의 비율:", (rare_cnt / total_cnt) * 100)
-    print("전체 등장 빈도에서 희귀 단어 등장 빈도 비율:", (rare_freq / total_freq) * 100)
-
-    # 전체 단어 개수 중 빈도수 2이하인 단어는 제거.
-    # 0번 패딩 토큰을 고려하여 + 1
-    vocab_size = total_cnt - rare_cnt + 1
-    print("단어 집합의 크기 :", vocab_size)
-
-    # 23/11/14 잘라진 tokenizer이 있어야 predict도 올바르게 수행
-    tokenizer = tensorflow.keras.preprocessing.text.Tokenizer(vocab_size)
-    tokenizer.fit_on_texts(X_train)
-    X_train = tokenizer.texts_to_sequences(X_train)
-    X_test = tokenizer.texts_to_sequences(X_test)
-
-    y_train = np.array(train_data["label"])
-    y_test = np.array(test_data["label"])
-    """
-    """
-    # 빈 샘플(empty samples) 제거
-    drop_train = [index for index, sentence in enumerate(X_train) if len(sentence) < 1]
-    # 빈 샘플들을 제거
-    X_train = np.delete(X_train, drop_train, axis=0)
-    y_train = np.delete(y_train, drop_train, axis=0)
-    print(len(X_train))
-    print(len(y_train))
-    """
 
     # 패딩 (길이 맞추기)
     print("문장의 최대 길이 :", max(len(review) for review in X_train))

@@ -353,6 +353,7 @@ def main() -> None:
     # return sttResult
 
 
+# 이 코드가 있으면 import 하면 자동 실행되므로 주의
 if __name__ == "__main__":
     main()
 

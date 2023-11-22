@@ -1,32 +1,24 @@
 from flask import Flask, render_template, Response
 import cv2
 import os
-import threading
+import speech_recognition as sr
+from google.cloud import speech
+import google_stream_stt as gs
+import pyaudio
+import sys
+import queue  # 추가
+
+# import threading
 import Varable as v
+from threading import Thread
 
 if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
     print("INIT")
 
 app = Flask(__name__)
 training_path = v.training_path  # Replace with the actual path
-
-# face_dict = v.face_dict
-# face_dict = {
-#     -1: "None",
-# }
-# print(f"flask_predict: {v.face_dict}")
-
-# def list_files(folder_path):
-#     files = os.listdir(folder_path)
-#     print(f"\n{len(files)} Files in the folder:")
-#     for file in files:
-#         print(file)
-#         key = int(file.split(".")[1])  # 파일명에서 키 추출
-#         value = file.split(".")[2]  # 파일명에서 값 추출
-#         face_dict[key] = value
-
-
-# list_files(training_path)
+transcript_result = ""
+transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
 
 
 def generate_frames():
@@ -46,8 +38,11 @@ def generate_frames():
     font = cv2.FONT_HERSHEY_SIMPLEX
     minW = 0.1 * cam.get(3)
     minH = 0.1 * cam.get(4)
+    global transcript_result
 
     while True:
+        # out(cam, face_detector, minW, minH, recognizer, font)
+        # =====================비디오====================
         ret, img = cam.read()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -83,9 +78,76 @@ def generate_frames():
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
 
+# =====================비디오====================
+
+
+# ======================오디오====================
+def start_google_stt():
+    while True:
+        client = speech.SpeechClient()
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=16000,
+            language_code="ko-KR",
+            max_alternatives=1,
+        )
+
+        streaming_config = speech.StreamingRecognitionConfig(
+            config=config, interim_results=True
+        )
+
+        mic_manager = gs.ResumableMicrophoneStream(16000, 1024)
+        sys.stdout.write("\nListening, say 'Quit' or 'Exit' to stop.\n\n")
+        sys.stdout.write("End (ms)       Transcript Results/Status\n")
+        sys.stdout.write("=====================================================\n")
+
+        with mic_manager as stream:
+            while not stream.closed:
+                stream.audio_input = []
+                audio_generator = stream.generator()
+
+                requests = (
+                    speech.StreamingRecognizeRequest(audio_content=content)
+                    for content in audio_generator
+                )
+
+                responses = client.streaming_recognize(streaming_config, requests)
+                transcript_result = gs.listen_print_loop(responses, stream)
+                transcript_queue.put(transcript_result)
+                # 수정: STT 결과를 큐에 저장
+
+                print(transcript_result)
+
+                if stream.result_end_time > 0:
+                    stream.final_request_end_time = stream.is_final_end_time
+                stream.result_end_time = 0
+                stream.last_audio_input = []
+                stream.last_audio_input = stream.audio_input
+                stream.audio_input = []
+                stream.restart_counter = stream.restart_counter + 1
+
+                if not stream.last_transcript_was_final:
+                    sys.stdout.write("\n")
+                stream.new_stream = True
+
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", transcript=transcript_result)
+
+
+# @app.route("/transcript")
+# def stream():
+#     return Response(transcript_result, content_type="text/event-stream")
+
+
+@app.route("/transcript")
+def get_transcript():
+    # 수정: 큐에서 STT 결과를 가져와 반환
+    if not transcript_queue.empty():
+        transcript_result = transcript_queue.get()
+        return Response(transcript_result, content_type="text/plain")
+    return Response("No transcript available", content_type="text/plain")
 
 
 @app.route("/stream")  # /stream endpoint를 추가
@@ -96,12 +158,33 @@ def stream():
 
 
 def run_app():
+    # stt_thread = Thread(target=start_google_stt)
+    # stt_thread = Thread()
+    # stt_thread.start()
+
+    stt_thread = Thread(target=start_google_stt)
+    video_thread = Thread(target=generate_frames)
+
+    stt_thread.start()
+    video_thread.start()
+
+    # stt_thread.join()
+    # video_thread.join()
+
     app.run(debug=True, threaded=True)
     # app.run(host=v.my_ip, port="9080", debug=True)
 
 
+# 이 코드가 있으면 import 하면 자동 실행되므로 주의
 if __name__ == "__main__":
     run_app()
+
+# stt_thread = Thread(target=start_google_stt)
+# stt_thread.start()
+
+# # Run the Flask app
+# app.run(debug=True, threaded=True)
+
 
 # if __name__ == "__main__":
 #     # Run Flask app in the main thread

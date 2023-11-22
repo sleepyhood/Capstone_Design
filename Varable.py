@@ -6,3 +6,7 @@ training_path = "OpenCV_trainer"
 my_ip = "192.168.99.179"
 
 face_dict = {}
+
+collectConut = 30
+
+# toggle_stream = True

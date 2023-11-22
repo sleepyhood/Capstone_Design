@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Flask-SocketIO Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Flask-SocketIO Example</h1>
+    <input type="text" id="messageInput" placeholder="Enter a message" />
+    <button onclick="sendMessage()">Send Message</button>
+
+    <div id="response"></div>
+
+    <script>
+      var socket = io.connect(
+        "http://" + document.domain + ":" + location.port
+      );
+
+      socket.on("message_from_server", function (data) {
+        document.getElementById("response").innerHTML = data;
+      });
+
+      function sendMessage() {
+        var message = document.getElementById("messageInput").value;
+        socket.emit("message_from_client", message);
+      }
+    </script>
+  </body>
+</html>
