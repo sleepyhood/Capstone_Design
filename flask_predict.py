@@ -13,9 +13,8 @@ import textCussDetect as td  # 텍스트 욕설 검출
 import Varable as v
 from threading import Thread
 import threading
+import winsound as sd
 
-# if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-#     print("INIT")
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
@@ -26,32 +25,21 @@ training_path = v.training_path  # Replace with the actual path
 transcript_result = ""
 transcript_result_lock = threading.Lock()
 
-transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
+# transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
 cussCount = 0  # 추가: 욕설 카운트 변수
 
 transcript = ""
 
-# X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
-#     0,
-#     0,
-#     0,
-#     0,
-#     0,
-#     0,
-#     0,
-#     0,
-# )
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 WHITE = "\033[0;37m"
 
 
-def start_streaming():
-    while True:
-        global transcript_result, cuss_count
-        transcript_result, cuss_count = start_google_stt()
-        transcript_queue.put((transcript_result, cuss_count))
+def beepsound():
+    fr = 2000  # range : 37 ~ 32767
+    du = 1000  # 1000 ms ==1second
+    sd.Beep(fr, du)  # winsound.Beep(frequency, duration)
 
 
 # 텍스트 기반 욕설 훈련을 재호출할 경우
@@ -156,22 +144,20 @@ def start_google_stt():
             )
 
             responses = client.streaming_recognize(streaming_config, requests)
-            # global transcript_result
             transcript_result = gs.listen_print_loop(responses, stream)
-            # global transcript_queue
-            transcript_queue.put(transcript_result)
-            # 수정: STT 결과를 큐에 저장
 
             print(transcript_result)
             # print(td.cuss_predict(transcript_result))
             tempSen = transcript_result
+            # not 으로 바꾸면 욕설의 여부 결과가 반대가 됨
             if td.cuss_predict(transcript_result):
                 sys.stdout.write(YELLOW)
                 sys.stdout.write("욕설 감지")
                 sys.stdout.write(WHITE)
                 cussCount += 1  # 추가: 욕설이 감지되면 cussCount 증가
-                # 클라이언트에게 결과를 JSON 형태로 전송
-                # return jsonify({"is_cuss": is_cuss})
+
+                # 삐 소리
+                beepsound()
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
@@ -194,16 +180,10 @@ def start_google_stt():
 
 @app.route("/")
 def index():
-    global cussCount, transcript_result
-
-    # start_google_stt()
-    # global transcript_result, cussCount
-    # return render_template("index.html", transcript=transcript_result)
-    # return render_template("index.html")
     return render_template("index.html")
 
 
-@app.route("/transcript", methods=["GET", "POST"])
+@app.route("/transcript", methods=["GET"])
 def get_transcript():
     sys.stdout.write(WHITE)
     # sys.stdout.write("get_transcript 호출됨")
@@ -211,7 +191,7 @@ def get_transcript():
     global transcript_result, cussCount
     sen = ""
     # cnt = 0
-
+    # start_google_stt 함수 내부 while 존재
     sen, cussCount = start_google_stt()
     # with transcript_result_lock:
     #     transcript_result, cuss_count = start_google_stt()
