@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
 import cv2
 import os
 import speech_recognition as sr
@@ -7,18 +7,50 @@ import google_stream_stt as gs
 import pyaudio
 import sys
 import queue  # 추가
+import textCussDetect as td  # 텍스트 욕설 검출
 
 # import threading
 import Varable as v
 from threading import Thread
 
-if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-    print("INIT")
+# if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+#     print("INIT")
 
 app = Flask(__name__)
 training_path = v.training_path  # Replace with the actual path
 transcript_result = ""
 transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
+
+X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+)
+
+
+def inintTextDetect():
+    global X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size
+    # 최초 1회 생성
+    (
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        tokenizer,
+        train_data,
+        test_data,
+        vocab_size,
+    ) = td.load_and_preprocess_data()
+
+
+# 텍스트 기반 욕설 훈련을 재호출할 경우
+def training():
+    td.training()
 
 
 def generate_frames():
@@ -83,6 +115,7 @@ def generate_frames():
 
 # ======================오디오====================
 def start_google_stt():
+    global tokenizer
     while True:
         client = speech.SpeechClient()
         config = speech.RecognitionConfig(
@@ -112,11 +145,18 @@ def start_google_stt():
                 )
 
                 responses = client.streaming_recognize(streaming_config, requests)
+                global transcript_result
                 transcript_result = gs.listen_print_loop(responses, stream)
+                global transcript_queue
                 transcript_queue.put(transcript_result)
                 # 수정: STT 결과를 큐에 저장
 
                 print(transcript_result)
+                print(td.cuss_predict(transcript_result, tokenizer))
+                if td.cuss_predict(transcript_result, tokenizer):
+                    print("욕 멈춰")
+                    # 클라이언트에게 결과를 JSON 형태로 전송
+                    # return jsonify({"is_cuss": is_cuss})
 
                 if stream.result_end_time > 0:
                     stream.final_request_end_time = stream.is_final_end_time
@@ -133,7 +173,8 @@ def start_google_stt():
 
 @app.route("/")
 def index():
-    return render_template("index.html", transcript=transcript_result)
+    # return render_template("index.html", transcript=transcript_result)
+    return render_template("index.html")
 
 
 # @app.route("/transcript")
@@ -144,10 +185,15 @@ def index():
 @app.route("/transcript")
 def get_transcript():
     # 수정: 큐에서 STT 결과를 가져와 반환
+    global transcript_queue
+    global transcript_result
     if not transcript_queue.empty():
         transcript_result = transcript_queue.get()
-        return Response(transcript_result, content_type="text/plain")
-    return Response("No transcript available", content_type="text/plain")
+    return Response(transcript_result, content_type="text/plain")
+    # return jsonify({"transcript_result": transcript_result})
+
+    # 아래는 1초 간격으로 업데이트 되므로 이전 레코드를 남겨야한다면 주석처리
+    # return Response("No transcript available", content_type="text/plain")
 
 
 @app.route("/stream")  # /stream endpoint를 추가
@@ -162,8 +208,18 @@ def run_app():
     # stt_thread = Thread()
     # stt_thread.start()
 
+    textDetect_thread = Thread(target=inintTextDetect)
+    # print(f"token: {token}")
     stt_thread = Thread(target=start_google_stt)
     video_thread = Thread(target=generate_frames)
+
+    # 메인 쓰레드 종료시 같이 종료 설정
+    textDetect_thread.daemon = True
+    stt_thread.daemon = True
+    video_thread.daemon = True
+
+    textDetect_thread.start()
+    textDetect_thread.join()
 
     stt_thread.start()
     video_thread.start()
@@ -176,19 +232,8 @@ def run_app():
 
 
 # 이 코드가 있으면 import 하면 자동 실행되므로 주의
-if __name__ == "__main__":
-    run_app()
+# if __name__ == "__main__":
+#     run_app()
 
 # stt_thread = Thread(target=start_google_stt)
 # stt_thread.start()
-
-# # Run the Flask app
-# app.run(debug=True, threaded=True)
-
-
-# if __name__ == "__main__":
-#     # Run Flask app in the main thread
-#     my_ip = "172.16.20.122"
-#     app.run(host=my_ip, port="9080", debug=True)
-# my_ip = "172.16.20.122"
-# app.run(host=v.my_ip, port="9080", debug=True)

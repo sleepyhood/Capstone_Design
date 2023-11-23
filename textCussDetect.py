@@ -209,7 +209,7 @@ def load_and_preprocess_data():
 
 
 # 모델 호출
-def sentiment_predict(new_sentence, tok):
+def cuss_predict(new_sentence, tok):
     try:
         loaded_model = tensorflow.keras.models.load_model("best_model.h5")
     except Exception as e:
