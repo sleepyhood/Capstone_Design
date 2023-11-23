@@ -33,6 +33,11 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from konlpy.tag import Okt
 from konlpy.tag import Kkma
 
+# import os
+
+# if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+#     print("INIT")
+
 okt = Okt()
 tokenizer = tensorflow.keras.preprocessing.text.Tokenizer()
 # 최대 길이 35라 가정시, dir 96%가 35이하의 길이를 가짐
@@ -61,8 +66,21 @@ stopwords = [
 
 file_path = "content/textDataset.txt"
 
+X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+)
+
 
 def load_and_preprocess_data():
+    global X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size
+
     x = []
     y = []
     with open(file_path, "r", encoding="UTF-8") as file:
@@ -196,32 +214,38 @@ def load_and_preprocess_data():
     y_test = np.array(test_data["label"])
 
     # 다른 함수에서 사용할 수 있도록 반환
-    return (
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        tokenizer,
-        train_data,
-        test_data,
-        vocab_size,
-    )
+    # return (
+    #     X_train,
+    #     y_train,
+    #     X_test,
+    #     y_test,
+    #     tokenizer,
+    #     train_data,
+    #     test_data,
+    #     vocab_size,
+    # )
 
 
 # 모델 호출
-def cuss_predict(new_sentence, tok):
+def cuss_predict(new_sentence):
+    global tokenizer
+    tok = tokenizer
     try:
         loaded_model = tensorflow.keras.models.load_model("best_model.h5")
     except Exception as e:
         print(f"모델 파일이 없습니다.\n{e}")
     # loaded_model = tensorflow.keras.models.load_model("best_model.h5")
 
-    new_sentence = re.sub(r"[^ㄱ-ㅎㅏ-ㅣ가-힣 ]", "", new_sentence)
+    if new_sentence is not None and isinstance(new_sentence, (str, bytes)):
+        new_sentence = re.sub(r"[^ㄱ-ㅎㅏ-ㅣ가-힣 ]", "", new_sentence)
+    else:
+        # 예외 처리 또는 다른 로직 추가
+        print("new_sentence is None or has an unsupported type.")
     new_sentence = okt.morphs(new_sentence, stem=True)  # 토큰화
     new_sentence = [word for word in new_sentence if not word in stopwords]  # 불용어 제거
     encoded = tok.texts_to_sequences([new_sentence])  # 정수 인코딩
     pad_new = pad_sequences(encoded, maxlen=max_len)  # 패딩
-    print(f"new_sentence: {new_sentence}")
+    # print(f"new_sentence: {new_sentence}")
     score = loaded_model.predict(pad_new)  # 예측
     score = float(score[0][0])
     print(f"score: {score}")
@@ -235,18 +259,10 @@ def cuss_predict(new_sentence, tok):
 
 
 def training():
+    # training 할 때는 load_and_preprocess_data()도 같이 호출
+    load_and_preprocess_data()
+    global X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size
     print("전처리 과정 진행")
-    # 모델 학습
-    (
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        tokenizer,
-        train_data,
-        test_data,
-        vocab_size,
-    ) = load_and_preprocess_data()
 
     # 패딩 (길이 맞추기)
     print("문장의 최대 길이 :", max(len(review) for review in X_train))

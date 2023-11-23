@@ -12,40 +12,46 @@ import textCussDetect as td  # 텍스트 욕설 검출
 # import threading
 import Varable as v
 from threading import Thread
+import threading
 
 # if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
 #     print("INIT")
 
 app = Flask(__name__)
+app.config["JSON_AS_ASCII"] = False
+# 아스키값 false 해야 한글 출력
 training_path = v.training_path  # Replace with the actual path
+
+# global 변수 앞에 Lock 추가
 transcript_result = ""
+transcript_result_lock = threading.Lock()
+
 transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
+cussCount = 0  # 추가: 욕설 카운트 변수
 
-X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-)
+transcript = ""
+
+# X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
+#     0,
+#     0,
+#     0,
+#     0,
+#     0,
+#     0,
+#     0,
+#     0,
+# )
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+WHITE = "\033[0;37m"
 
 
-def inintTextDetect():
-    global X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size
-    # 최초 1회 생성
-    (
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        tokenizer,
-        train_data,
-        test_data,
-        vocab_size,
-    ) = td.load_and_preprocess_data()
+def start_streaming():
+    while True:
+        global transcript_result, cuss_count
+        transcript_result, cuss_count = start_google_stt()
+        transcript_queue.put((transcript_result, cuss_count))
 
 
 # 텍스트 기반 욕설 훈련을 재호출할 경우
@@ -55,8 +61,6 @@ def training():
 
 def generate_frames():
     cam = cv2.VideoCapture(0)
-    # cam.set(3, 640)  # set video width
-    # cam.set(4, 480)  # set video height
     recognizer = cv2.face.LBPHFaceRecognizer_create()
 
     for filename in os.listdir(training_path):
@@ -70,7 +74,6 @@ def generate_frames():
     font = cv2.FONT_HERSHEY_SIMPLEX
     minW = 0.1 * cam.get(3)
     minH = 0.1 * cam.get(4)
-    global transcript_result
 
     while True:
         # out(cam, face_detector, minW, minH, recognizer, font)
@@ -88,7 +91,7 @@ def generate_frames():
         for x, y, w, h in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
             id, confidence = recognizer.predict(gray[y : y + h, x : x + w])
-            print(f"id: {id}")
+            # print(f"id: {id}")
             # print(f"generate_frames: {v.face_dict}")  # 추가
             if confidence < 100 and id in v.face_dict:
                 id = v.face_dict[id]
@@ -115,85 +118,114 @@ def generate_frames():
 
 # ======================오디오====================
 def start_google_stt():
-    global tokenizer
-    while True:
-        client = speech.SpeechClient()
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code="ko-KR",
-            max_alternatives=1,
-        )
+    # transcript_result = ""
+    global cussCount, transcript_result
+    # global transcript_queue, cussCount, transcript_result
+    # while True:
+    client = speech.SpeechClient()
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz=16000,
+        language_code="ko-KR",
+        max_alternatives=1,
+    )
 
-        streaming_config = speech.StreamingRecognitionConfig(
-            config=config, interim_results=True
-        )
+    streaming_config = speech.StreamingRecognitionConfig(
+        config=config, interim_results=True
+    )
 
-        mic_manager = gs.ResumableMicrophoneStream(16000, 1024)
-        sys.stdout.write("\nListening, say 'Quit' or 'Exit' to stop.\n\n")
-        sys.stdout.write("End (ms)       Transcript Results/Status\n")
-        sys.stdout.write("=====================================================\n")
+    mic_manager = gs.ResumableMicrophoneStream(16000, 1024)
+    sys.stdout.write("\nListening, say 'Quit' or 'Exit' to stop.\n\n")
+    sys.stdout.write("End (ms)       Transcript Results/Status\n")
+    sys.stdout.write("=====================================================\n")
 
-        with mic_manager as stream:
-            while not stream.closed:
-                stream.audio_input = []
-                audio_generator = stream.generator()
+    tempSen = ""
+    with mic_manager as stream:
+        while not stream.closed:
+            # while True:
+            sys.stdout.write(GREEN)
+            sys.stdout.write("\nwhile not stream.closed:\n")
+            sys.stdout.write(WHITE)
 
-                requests = (
-                    speech.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator
-                )
+            stream.audio_input = []
+            audio_generator = stream.generator()
 
-                responses = client.streaming_recognize(streaming_config, requests)
-                global transcript_result
-                transcript_result = gs.listen_print_loop(responses, stream)
-                global transcript_queue
-                transcript_queue.put(transcript_result)
-                # 수정: STT 결과를 큐에 저장
+            requests = (
+                speech.StreamingRecognizeRequest(audio_content=content)
+                for content in audio_generator
+            )
 
-                print(transcript_result)
-                print(td.cuss_predict(transcript_result, tokenizer))
-                if td.cuss_predict(transcript_result, tokenizer):
-                    print("욕 멈춰")
-                    # 클라이언트에게 결과를 JSON 형태로 전송
-                    # return jsonify({"is_cuss": is_cuss})
+            responses = client.streaming_recognize(streaming_config, requests)
+            # global transcript_result
+            transcript_result = gs.listen_print_loop(responses, stream)
+            # global transcript_queue
+            transcript_queue.put(transcript_result)
+            # 수정: STT 결과를 큐에 저장
 
-                if stream.result_end_time > 0:
-                    stream.final_request_end_time = stream.is_final_end_time
-                stream.result_end_time = 0
-                stream.last_audio_input = []
-                stream.last_audio_input = stream.audio_input
-                stream.audio_input = []
-                stream.restart_counter = stream.restart_counter + 1
+            print(transcript_result)
+            # print(td.cuss_predict(transcript_result))
+            tempSen = transcript_result
+            if td.cuss_predict(transcript_result):
+                sys.stdout.write(YELLOW)
+                sys.stdout.write("욕설 감지")
+                sys.stdout.write(WHITE)
+                cussCount += 1  # 추가: 욕설이 감지되면 cussCount 증가
+                # 클라이언트에게 결과를 JSON 형태로 전송
+                # return jsonify({"is_cuss": is_cuss})
 
-                if not stream.last_transcript_was_final:
-                    sys.stdout.write("\n")
-                stream.new_stream = True
+            if stream.result_end_time > 0:
+                stream.final_request_end_time = stream.is_final_end_time
+            stream.result_end_time = 0
+            stream.last_audio_input = []
+            stream.last_audio_input = stream.audio_input
+            stream.audio_input = []
+            stream.restart_counter = stream.restart_counter + 1
+
+            if not stream.last_transcript_was_final:
+                sys.stdout.write("\n")
+            stream.new_stream = True
+
+            # 문장을 하나라도 변환했다면 계속 스트림을 받지않고 출력해야함
+            # 즉, 다시 웹으로 리턴해야함
+            if tempSen != "":
+                return tempSen, cussCount
+            # return transcript_result, cussCount
 
 
 @app.route("/")
 def index():
+    global cussCount, transcript_result
+
+    # start_google_stt()
+    # global transcript_result, cussCount
     # return render_template("index.html", transcript=transcript_result)
+    # return render_template("index.html")
     return render_template("index.html")
 
 
-# @app.route("/transcript")
-# def stream():
-#     return Response(transcript_result, content_type="text/event-stream")
-
-
-@app.route("/transcript")
+@app.route("/transcript", methods=["GET", "POST"])
 def get_transcript():
-    # 수정: 큐에서 STT 결과를 가져와 반환
-    global transcript_queue
-    global transcript_result
-    if not transcript_queue.empty():
-        transcript_result = transcript_queue.get()
-    return Response(transcript_result, content_type="text/plain")
-    # return jsonify({"transcript_result": transcript_result})
+    sys.stdout.write(WHITE)
+    # sys.stdout.write("get_transcript 호출됨")
+    # global transcript_queue, cussCount, transcript_result
+    global transcript_result, cussCount
+    sen = ""
+    # cnt = 0
 
-    # 아래는 1초 간격으로 업데이트 되므로 이전 레코드를 남겨야한다면 주석처리
-    # return Response("No transcript available", content_type="text/plain")
+    sen, cussCount = start_google_stt()
+    # with transcript_result_lock:
+    #     transcript_result, cuss_count = start_google_stt()
+    # sen, cnt = start_google_stt()
+    # transcript_result, cuss_count = start_google_stt()
+    # cuss_count = int(cuss_count)
+    # if not transcript_queue.empty():
+    #     transcript_result = transcript_queue.get()
+    # if not transcript_queue.empty():
+    #     transcript_result, cuss_count = transcript_queue.get()
+    #     cussCount = cuss_count
+    # transcript_result, cussCount = start_google_stt()
+    # print(f"in flask_predict: {sen}")
+    return jsonify({"transcript_result": sen, "cussCount": cussCount})
 
 
 @app.route("/stream")  # /stream endpoint를 추가
@@ -203,37 +235,23 @@ def stream():
     )
 
 
+def a():
+    for i in range(50):
+        print(i)
+
+
 def run_app():
-    # stt_thread = Thread(target=start_google_stt)
-    # stt_thread = Thread()
-    # stt_thread.start()
+    print("run_app호출")
 
-    textDetect_thread = Thread(target=inintTextDetect)
-    # print(f"token: {token}")
-    stt_thread = Thread(target=start_google_stt)
-    video_thread = Thread(target=generate_frames)
-
-    # 메인 쓰레드 종료시 같이 종료 설정
-    textDetect_thread.daemon = True
-    stt_thread.daemon = True
-    video_thread.daemon = True
+    textDetect_thread = Thread(target=td.load_and_preprocess_data)
 
     textDetect_thread.start()
     textDetect_thread.join()
 
-    stt_thread.start()
-    video_thread.start()
-
-    # stt_thread.join()
-    # video_thread.join()
-
-    app.run(debug=True, threaded=True)
-    # app.run(host=v.my_ip, port="9080", debug=True)
+    app.run(debug=True, threaded=True, use_reloader=False)
 
 
+#  * Running on http://127.0.0.1:5000
 # 이 코드가 있으면 import 하면 자동 실행되므로 주의
 # if __name__ == "__main__":
 #     run_app()
-
-# stt_thread = Thread(target=start_google_stt)
-# stt_thread.start()

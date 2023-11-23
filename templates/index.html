@@ -20,53 +20,45 @@
         <div class="col-lg-8 offset-lg-2">
           <h3 class="mt-5">Live Streaming</h3>
           <img src="{{ url_for('stream') }}" width="100%" />
-          <!--<script>
-            setInterval(updateTranscript, 1000);
-          </script>-->
-          <!-- URL이랑 flask router 함수랑 똑같게 해야함 -->
         </div>
       </div>
     </div>
-    <div id="speechContainer">
-      <!--<h1>Live Subtitle</h1>
-      <form method="post" enctype="multipart/form-data">
-        <br />
-      </form>
--->
+    <center>
       <div id="speechTranscriptContainer">
-        <h1>Transcript</h1>
-        <p id="speechText"></p>
+        <h2>Transcript</h2>
+        <p id="speechText">{{ transcript_result }}</p>
       </div>
-    </div>
-
-    <!--
-    <div id="speechContainer">
-      <h1>Say something!</h1>
-      <form method="post" enctype="multipart/form-data">
-        <br />
-      </form>
-
-      {% if transcript != "" %}
-      <div id="speechTranscriptContainer">
-        <h1>Transcript</h1>
-        <p id="speechText">{{ transcript }}</p>
+      <!-- 추가: 욕설 카운트 표시 -->
+      <div>
+        <h2>Cuss Count:</h2>
+        <span id="cussCount">{{ cussCount }}</span>
       </div>
-      {% endif %}
-    </div>-->
-
+    </center>
     <script>
       function updateTranscript() {
         fetch("/transcript")
-          .then((response) => response.text())
+          .then((response) => response.json())
           .then((data) => {
-            document.getElementById("speechText").innerText = data;
+            document.getElementById("speechText").innerText =
+              data.transcript_result;
+            document.getElementById(
+              "cussCount"
+            ).innerText = `${data.cussCount}`;
           })
           .catch((error) => console.error("Error:", error));
       }
 
-      // Update transcript every 1 second (adjust as needed)
-      // 코드는 1초 간격으로 get 메서드를 사용하여 레이블을 업데이트
+      // Update transcript every 1 second
       setInterval(updateTranscript, 1000);
     </script>
+
+    <!--<div id="speechTranscriptContainer2">
+      <h2>Transcript2</h2>
+      <p src="{{ url_for('get_transcript') }}" />
+
+      <p id="speechText2"></p>
+      <p>{{ transcript_result }}</p>
+      
+    </div>-->
   </body>
 </html>
