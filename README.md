@@ -13,6 +13,9 @@
     - **textCussDetect.py**: 텍스트 기반으로 문장 내에 욕설이 있는지 검출 결과 반환
 - **Varable.py**: 경로와 같은 자주 변하지 않는 변수 저장
 
+
+
+
 ### 패치 23/11/24
 
 <img width="398" alt="image" src="https://github.com/sleepyhood/Capstone_Design/assets/69490791/1b410d03-61ba-4f65-baa8-603cd5d718c5">
@@ -21,6 +24,8 @@
 - 오디오와 비디오가 웹에 정상적으로 출력되도록 수정
 - 오디오에서 비속어 검출시, 부저음이 들리도록 피드백 추가
 - 시연용 얼굴 이미지 yaml 제작
+
+---
 
 ### 패치 23/11/16
 
