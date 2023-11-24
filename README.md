@@ -13,9 +13,6 @@
     - **textCussDetect.py**: 텍스트 기반으로 문장 내에 욕설이 있는지 검출 결과 반환
 - **Varable.py**: 경로와 같은 자주 변하지 않는 변수 저장
 
-
-
-
 ### 패치 23/11/24
 
 <img width="398" alt="image" src="https://github.com/sleepyhood/Capstone_Design/assets/69490791/1b410d03-61ba-4f65-baa8-603cd5d718c5">
