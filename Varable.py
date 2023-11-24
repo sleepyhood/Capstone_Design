@@ -2,9 +2,8 @@
 data_path = "OpenCV_dataset"
 training_path = "OpenCV_trainer"
 
+textData_path = "content/textDataset.txt"
 #
-my_ip = "192.168.99.179"
-
 face_dict = {}
 
 collectConut = 30

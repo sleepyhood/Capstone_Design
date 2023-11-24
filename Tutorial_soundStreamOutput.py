@@ -57,16 +57,16 @@ try:
         stream_out.write(output_data)
         # print(type(output_data))#<class 'bytes'>
 
-        ret, img = cam.read()
+        # ret, img = cam.read()
         # img = cv2.flip(img, -1) # flip video image vertically
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Save the captured image into the datasets folder
-        if ret:
-            cv2.imshow("image", img)
-        k = cv2.waitKey(100) & 0xFF  # Press 'ESC' for exiting video
-        if k == 27:
-            break
+        # if ret:
+        #     cv2.imshow("image", img)
+        # k = cv2.waitKey(100) & 0xFF  # Press 'ESC' for exiting video
+        # if k == 27:
+        #     break
 
 
 except KeyboardInterrupt:

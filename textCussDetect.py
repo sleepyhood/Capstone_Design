@@ -32,11 +32,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from konlpy.tag import Okt
 from konlpy.tag import Kkma
-
-# import os
-
-# if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-#     print("INIT")
+import Varable as v
 
 okt = Okt()
 tokenizer = tensorflow.keras.preprocessing.text.Tokenizer()
@@ -64,7 +60,7 @@ stopwords = [
     "하다",
 ]
 
-file_path = "content/textDataset.txt"
+file_path = v.textData_path
 
 X_train, y_train, X_test, y_test, tokenizer, train_data, test_data, vocab_size = (
     0,
@@ -351,16 +347,3 @@ def training():
 
     print("\n 테스트 정확도: %.4f" % (loaded_model.evaluate(X_test, y_test)[1]))
     return tokenizer
-
-
-# (
-#     X_train,
-#     y_train,
-#     X_test,
-#     y_test,
-#     tokenizer,
-#     train_data,
-#     test_data,
-# ) = load_and_preprocess_data()
-# # training()
-# sentiment_predict("와", tokenizer)

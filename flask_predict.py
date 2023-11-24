@@ -23,9 +23,6 @@ training_path = v.training_path  # Replace with the actual path
 
 # global 변수 앞에 Lock 추가
 transcript_result = ""
-transcript_result_lock = threading.Lock()
-
-# transcript_queue = queue.Queue()  # 추가: STT 결과를 저장할 큐
 cussCount = 0  # 추가: 욕설 카운트 변수
 
 transcript = ""
@@ -42,11 +39,7 @@ def beepsound():
     sd.Beep(fr, du)  # winsound.Beep(frequency, duration)
 
 
-# 텍스트 기반 욕설 훈련을 재호출할 경우
-def training():
-    td.training()
-
-
+# ====================비디오====================
 def generate_frames():
     cam = cv2.VideoCapture(0)
     recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -101,10 +94,10 @@ def generate_frames():
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
 
 
-# =====================비디오====================
+# ====================비디오====================
 
 
-# ======================오디오====================
+# ====================오디오====================
 def start_google_stt():
     # transcript_result = ""
     global cussCount, transcript_result
@@ -149,13 +142,14 @@ def start_google_stt():
             print(transcript_result)
             # print(td.cuss_predict(transcript_result))
             tempSen = transcript_result
+            tempCnt = cussCount
             # not 으로 바꾸면 욕설의 여부 결과가 반대가 됨
             if td.cuss_predict(transcript_result):
                 sys.stdout.write(YELLOW)
                 sys.stdout.write("욕설 감지")
                 sys.stdout.write(WHITE)
                 cussCount += 1  # 추가: 욕설이 감지되면 cussCount 증가
-
+                tempCnt = cussCount
                 # 삐 소리
                 beepsound()
 
@@ -174,8 +168,12 @@ def start_google_stt():
             # 문장을 하나라도 변환했다면 계속 스트림을 받지않고 출력해야함
             # 즉, 다시 웹으로 리턴해야함
             if tempSen != "":
-                return tempSen, cussCount
+                return tempSen, tempCnt
+            # 조건없이 return시 실행 안됨
             # return transcript_result, cussCount
+
+
+# ====================오디오====================
 
 
 @app.route("/")
@@ -185,27 +183,20 @@ def index():
 
 @app.route("/transcript", methods=["GET"])
 def get_transcript():
-    sys.stdout.write(WHITE)
-    # sys.stdout.write("get_transcript 호출됨")
-    # global transcript_queue, cussCount, transcript_result
     global transcript_result, cussCount
     sen = ""
-    # cnt = 0
+    cnt = 0
     # start_google_stt 함수 내부 while 존재
-    sen, cussCount = start_google_stt()
-    # with transcript_result_lock:
-    #     transcript_result, cuss_count = start_google_stt()
-    # sen, cnt = start_google_stt()
+    sen, cnt = start_google_stt()
+
     # transcript_result, cuss_count = start_google_stt()
-    # cuss_count = int(cuss_count)
-    # if not transcript_queue.empty():
-    #     transcript_result = transcript_queue.get()
+
     # if not transcript_queue.empty():
     #     transcript_result, cuss_count = transcript_queue.get()
     #     cussCount = cuss_count
     # transcript_result, cussCount = start_google_stt()
-    # print(f"in flask_predict: {sen}")
-    return jsonify({"transcript_result": sen, "cussCount": cussCount})
+
+    return jsonify({"transcript_result": sen, "cussCount": cnt})
 
 
 @app.route("/stream")  # /stream endpoint를 추가
@@ -215,14 +206,10 @@ def stream():
     )
 
 
-def a():
-    for i in range(50):
-        print(i)
-
-
 def run_app():
     print("run_app호출")
 
+    # !중요: token이 있어야 텍스트 정규화가 가능하므로 처음 한 번은 실행하고 predict할 때도 필요
     textDetect_thread = Thread(target=td.load_and_preprocess_data)
 
     textDetect_thread.start()

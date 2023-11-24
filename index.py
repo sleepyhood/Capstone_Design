@@ -1,17 +1,7 @@
-# import re
 import os
-import sys
-
-# import sys
 import google_stream_stt as gs  # stt 모듈
 import numpy as np
 from threading import Thread
-
-
-# from keras import layers, models, optimizers, losses, metrics
-
-# from tensorflow.keras.preprocessing.sequence import pad_sequences
-
 
 # 사용자 모듈
 import textCussDetect as td
@@ -24,19 +14,6 @@ import flask_predict as fp
 # Path for face image database
 data_path = v.data_path
 training_path = v.training_path
-
-RATE = 44100
-
-
-# 조건을 만족할 때 삐- 소리 생성
-def beep():
-    frequency = 1000  # 소리의 높낮이
-    duration = 1  # 지속시간 (초)
-
-    t = np.arange(int(RATE * duration)) / RATE
-    wave = 0.5 * np.sin(2 * np.pi * frequency * t)
-
-    return wave.astype(np.int16).tobytes()
 
 
 # 폴더
@@ -52,6 +29,7 @@ def list_files(folder_path):
     return local_face_dict
 
 
+# 파일 삭제 함수
 def delete_file(file_path):
     try:
         os.remove(file_path)
@@ -64,19 +42,17 @@ v.face_dict = list_files(data_path)
 print(f"index_v.face_dict: {v.face_dict}")
 
 
-# !중요: token이 있어야 텍스트 정규화가 가능하므로 처음 한 번은 실행하고 predict할 때도 필요
-
-
 def main():
     while True:
         print("\nOptions:")
-        print("1. 이미지 촬영")
-        print("2. 이미지 학습")
-        print("3. 학습 데이터 확인")
-        print("4. 웹캠 실행(+오디오 검열)")
+        print("1. [비디오] 이미지 촬영")
+        print("2. [비디오] 이미지 학습")
+        print("3. [비디오] 학습된 인원 확인")
+        print("4. [오디오] 텍스트 검열 모델 훈련(필요시 실행)")
+        print("5. [비디오+오디오] 모자이크와 비속어 판별(웹에서 실행됩니다.)")
         print("0. 종료")
 
-        choice = input("Enter your choice (1/2/3/4): ")
+        choice = input("Enter your choice (1/2/3/4/5/0): ")
 
         if choice == "0":
             print("Exiting the program.")
@@ -89,7 +65,11 @@ def main():
         elif choice == "3":
             v.face_dict = list_files(data_path)
             print(v.face_dict)
-        elif choice == "4":
+        elif choice == "4":  # 텍스트 기반 욕설 훈련을 재호출할 경우
+            td.training()
+            print("모델 재훈련 완료")
+        elif choice == "5":
+            print("토크나이저 초기화 후 실행됩니다...")
             fp.run_app()
             break
         else:
