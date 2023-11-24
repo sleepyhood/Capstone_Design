@@ -15,6 +15,8 @@
 
 ### 패치 23/11/24
 
+<img width="398" alt="image" src="https://github.com/sleepyhood/Capstone_Design/assets/69490791/1b410d03-61ba-4f65-baa8-603cd5d718c5">
+
 - 오디오 스트림이 get 메서드에 맞게 동작 순서 수정
 - 오디오와 비디오가 웹에 정상적으로 출력되도록 수정
 - 오디오에서 비속어 검출시, 부저음이 들리도록 피드백 추가
