@@ -1,4 +1,6 @@
-# Capstone_Design
+# 영상/음성 자동 모자이크 서비스
+
+## Capstone_Design
 
 - 2023 캡스톤 디자인 2(23/11/24 기준 정리 완료)
 
