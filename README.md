@@ -4,6 +4,14 @@
 
 - 2023 캡스톤 디자인 2(23/11/24 기준 정리 완료)
 
+![image](https://github.com/sleepyhood/Capstone_Design/assets/69490791/7c39585d-c0eb-491c-bc40-41725ecf482d) 
+
+- 사전에 인물을 학습하여, 학습된 인물을 제외하고 모자이크 처리합니다.
+
+![image](https://github.com/sleepyhood/Capstone_Design/assets/69490791/79b9c141-d6ce-46e4-b41b-668b8f1c6e61)
+
+- 음성 필터링은 STT기능을 사용하여, 텍스트 기반의 욕설 검출모델(LSTM)을 사용했습니다.
+
 ---
 
 ## 주요 파일 목록
