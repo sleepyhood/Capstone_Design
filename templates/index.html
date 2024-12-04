@@ -1,0 +1,64 @@
+<!-- index.html -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+    <title>STREAMING</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+          <h3 class="mt-5">Live Streaming</h3>
+          <img src="{{ url_for('stream') }}" width="100%" />
+        </div>
+      </div>
+    </div>
+    <center>
+      <div id="speechTranscriptContainer">
+        <h2>Transcript</h2>
+        <p id="speechText">{{ transcript_result }}</p>
+      </div>
+      <!-- 추가: 욕설 카운트 표시 -->
+      <div>
+        <h2>Cuss Count:</h2>
+        <span id="cussCount">{{ cussCount }}</span>
+      </div>
+    </center>
+    <script>
+      function updateTranscript() {
+        fetch("/transcript")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("speechText").innerText =
+              data.transcript_result;
+            document.getElementById(
+              "cussCount"
+            ).innerText = `${data.cussCount}`;
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      // Update transcript every 1 second
+      setInterval(updateTranscript, 1000);
+    </script>
+
+    <!--<div id="speechTranscriptContainer2">
+      <h2>Transcript2</h2>
+      <p src="{{ url_for('get_transcript') }}" />
+
+      <p id="speechText2"></p>
+      <p>{{ transcript_result }}</p>
+      
+    </div>-->
+  </body>
+</html>
